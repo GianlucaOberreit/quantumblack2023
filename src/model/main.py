@@ -221,7 +221,7 @@ def flip(x, y_boxes):
 
 
 organize_data(DATA_PATH)
-train_valid_data = get_datasets(DATA_PATH)
+train_valid_data = get_datasets(DATA_PATH + 'processed_data/')
 
 
 def define_model(name, input_shape, seed=31415, existing_model_path=None):

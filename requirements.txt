@@ -3,6 +3,6 @@ tensorflow[and-cuda]
 numpy
 pandas
 matplotlib
-sklearn
+scikit-learn
 streamlit
 PIL
