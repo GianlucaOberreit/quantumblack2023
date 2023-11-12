@@ -13,6 +13,19 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import zoom
 
 def set_up(hex_color, max_width=1200, padding_top=1, padding_right=1, padding_left=1, padding_bottom=1, text_color="#FFF", background_color="#0A100D"):
+    """
+        Set up the Streamlit page configuration and apply custom CSS styles.
+
+        Args:
+        - hex_color (str): Hex code for the primary background color.
+        - max_width (int, optional): Maximum width of the central container in pixels. Default is 1200.
+        - padding_top (int, optional): Top padding in rem units. Default is 1.
+        - padding_right (int, optional): Right padding in rem units. Default is 1.
+        - padding_left (int, optional): Left padding in rem units. Default is 1.
+        - padding_bottom (int, optional): Bottom padding in rem units. Default is 1.
+        - text_color (str, optional): Hex code for the text color. Default is "#FFF".
+        - background_color (str, optional): Hex code for the background color of the main container. Default is "#0A100D".
+    """
     st.set_page_config(layout="wide")
     st.markdown(
         f"""    
@@ -45,22 +58,28 @@ def set_up(hex_color, max_width=1200, padding_top=1, padding_right=1, padding_le
 set_up("#0A100D") # Set background color and other properties
 
 def define_model(name, input_shape, seed=31415):
-    # Setting seed
+    """
+        Define a Keras model with specific architecture.
+
+        Args:
+        - name (str): Name of the model.
+        - input_shape (tuple): The shape of the input data (height, width, channels).
+        - seed (int, optional): Seed for random number generators in numpy and TensorFlow. Default is 31415.
+
+        Returns:
+        - keras.Model: A Keras Model object with the defined architecture.
+    """
+    # Setting seed for reproducibility
     np.random.seed(seed)
     tf.random.set_seed(seed)
 
-    # Getting the parameters
+    # Define model parameters
     filters = [8, 16, 64]
     filters_dim = [3, 3, 5, 5]
     max_pool_dim = [1, 2, 1, 2]
     dropout = 0.2
     classification_layers = [16, 8]
     localization_layers = [64, 16]
-
-    data_augmentation = tf.keras.Sequential([
-        layers.RandomFlip("horizontal_and_vertical"),
-        # layers.RandomRotation(0.2),
-    ])
 
     # Backbone model
     model = models.Sequential()
@@ -107,6 +126,15 @@ def define_model(name, input_shape, seed=31415):
 # Load your trained model (make sure to provide the correct path)
 # @st.cache(allow_output_mutation=True)
 def load_model(model_path):
+    """
+        Load a trained Keras model from the specified path.
+
+        Args:
+        - model_path (str): Path to the trained model weights.
+
+        Returns:
+        - keras.Model: A Keras Model object with weights loaded from the specified file.
+    """
     # model = tf.keras.models.load_model(model_path)
     model = define_model(name='production', input_shape=(64, 64, 1))
     model.load_weights(model_path)
@@ -114,10 +142,28 @@ def load_model(model_path):
     return model
 
 def convert_I_to_L(img):
+    """
+    Convert an image to 8-bit grayscale.
+
+    Args:
+    - img (Image): An instance of PIL.Image.
+
+    Returns:
+    - Image: A converted 8-bit grayscale PIL.Image object.
+    """
     array = np.uint8(np.array(img) / 256)
     return Image.fromarray(array)
 
 def process_image(image):
+    """
+    Process an image for model prediction.
+
+    Args:
+    - image (Image): An image to process, as a PIL.Image object.
+
+    Returns:
+    - numpy.ndarray: Processed image suitable for model input.
+    """
     image = image.resize((64, 64))  # Replace with the model's expected input size
     image = np.array(image) / 2 ** 16
     image = np.expand_dims(image, axis=0)  # Model expects a batch of images
@@ -125,15 +171,30 @@ def process_image(image):
 
 
 def create_heatmap(img, model):
+    """
+    Create a heatmap from the specified model layer outputs.
+
+    Args:
+    - img (numpy.ndarray): The input image for the model.
+    - model (keras.Model): The trained Keras model.
+
+    Returns:
+    - None: This function saves the heatmap as an image file.
+    """
+    # Access specific layers' output from the model
     conv_output = model.get_layer("max_pooling2d_2").output
     pred_ouptut = model.get_layer("dense").output
     heatmap_model = Model(model.input, outputs=[conv_output, pred_ouptut])
     conv, pred = heatmap_model.predict(img, verbose=0)
     target = np.argmax(pred, axis=1).squeeze()
     w, b = heatmap_model.get_layer("dense").weights
+
+    # Calculate scale factors for resizing heatmap
     scaleh = model.input.shape[1] / conv_output.shape[1]
     scalew = model.input.shape[2] / conv_output.shape[2]
     weights = w[:, target].numpy()
+
+    # Generate heatmap
     heatmap = conv.squeeze() @ weights
     print(heatmap*255)
     print(heatmap.shape)
@@ -143,7 +204,14 @@ def create_heatmap(img, model):
     plt.imshow(zoom(heatmap*255, zoom=(scaleh, scalew)), cmap='jet', alpha=0.5)
     plt.savefig('./data/test.png', bbox_inches='tight', pad_inches=0)
 
+# Define the Streamlit Home Page
+
 def Home():
+    """
+    Define and render the Streamlit home page layout and content.
+
+    This function creates a layout for the home page of a Streamlit app, including logo placements, sign-up/log-in buttons, and model prediction functionalities.
+    """
     # Layout with columns
     col1, col2, col3, col4 = st.columns([1,14,1.2,1])
 
