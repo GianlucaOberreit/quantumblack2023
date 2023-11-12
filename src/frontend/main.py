@@ -1,9 +1,9 @@
 import streamlit as st
-
+from atmospheR import AtmospheR_page
 def set_up(hex_color, max_width=1200, padding_top=1, padding_right=1, padding_left=1, padding_bottom=1, text_color="#FFF", background_color="#0A100D"):
     st.set_page_config(layout="wide")
     st.markdown(
-        f"""
+        f"""    
         <style>
             .reportview-container .main .block-container {{
                 max-width: {max_width}px;
@@ -86,6 +86,7 @@ def Home():
     st.markdown(footer, unsafe_allow_html=True)
 
 def AtmospheR():
+    AtmospheR_page()
 
 
 
