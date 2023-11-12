@@ -9,6 +9,37 @@ from keras import models, layers, regularizers
 from keras.metrics import Recall, Precision
 import math
 
+def set_up(hex_color, max_width=1200, padding_top=1, padding_right=1, padding_left=1, padding_bottom=1, text_color="#FFF", background_color="#0A100D"):
+    st.set_page_config(layout="wide")
+    st.markdown(
+        f"""    
+        <style>
+            .reportview-container .main .block-container {{
+                max-width: {max_width}px;
+                padding-top: {padding_top}rem;
+                padding-right: {padding_right}rem;
+                padding-left: {padding_left}rem;
+                padding-bottom: {padding_bottom}rem;
+            }}
+            .reportview-container .main {{
+                color: {text_color};
+                background-color: {background_color};
+            }}
+            .stApp {{
+                background-color: {hex_color};
+            }}
+            .centered {{
+                text-align: center;
+            }}
+            .text {{
+                font-family: 'Montserrat', sans-serif;  
+                font-weight: bold;
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+set_up("#0A100D") # Set background color and other properties
 
 def define_model(name, input_shape, seed=31415):
     # Setting seed
@@ -139,12 +170,10 @@ def convert_I_to_L(img):
     return Image.fromarray(array)
 
 def process_image(image):
-    image = image.resize((64, 64))  # Replace with your model's expected input size
+    image = image.resize((64, 64))  # Replace with the model's expected input size
     image = np.array(image) / 2 ** 16
     image = np.expand_dims(image, axis=0)  # Model expects a batch of images
     return image
-# Example usage
-set_up("#0A100D") # Set background color
 
 def Home():
     # Layout with columns
@@ -224,16 +253,6 @@ def Home():
     with col3:
         st.image('./data/ForecastR.png', width=400)
 
-    # Footer
-    footer = """
-        <div class='centered' style='display: flex; justify-content: center; padding: 10px;'>
-            <div style='width: 24px; height: 24px; background: gray; border-radius: 50%; margin: 0 10px;'></div>
-            <div style='width: 24px; height: 24px; background: gray; border-radius: 50%; margin: 0 10px;'></div>
-            <div style='width: 24px; height: 24px; background: gray; border-radius: 50%; margin: 0 10px;'></div>
-            <div style='width: 24px; height: 24px; background: gray; border-radius: 50%; margin: 0 10px;'></div>
-        </div>
-    """
-    st.markdown(footer, unsafe_allow_html=True)
 
 
 def empty_space(i):
