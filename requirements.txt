@@ -6,3 +6,5 @@ matplotlib
 scikit-learn
 streamlit
 Pillow
+opencv
+scipy

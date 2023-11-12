@@ -8,6 +8,9 @@ from tensorflow import keras
 from keras import models, layers, regularizers
 from keras.metrics import Recall, Precision
 import math
+from keras import Model
+import matplotlib as plt
+from scipy.ndimage import zoom
 
 def set_up(hex_color, max_width=1200, padding_top=1, padding_right=1, padding_left=1, padding_bottom=1, text_color="#FFF", background_color="#0A100D"):
     st.set_page_config(layout="wide")
@@ -120,6 +123,26 @@ def process_image(image):
     image = np.expand_dims(image, axis=0)  # Model expects a batch of images
     return image
 
+
+def create_heatmap(img, model):
+    conv_output = model.get_layer("max_pooling2d_2").output
+    pred_ouptut = model.get_layer("dense").output
+    heatmap_model = Model(model.input, outputs=[conv_output, pred_ouptut])
+
+    conv, pred = heatmap_model.predict(img.reshape([*img.shape, 1]), verbose=0)
+    target = np.argmax(pred, axis=1).squeeze()
+    w, b = heatmap_model.get_layer("dense").weights
+    scaleh = model.input.shape[1] / conv_output.shape[1]
+    scalew = model.input.shape[2] / conv_output.shape[2]
+    weights = w[:, target].numpy()
+    heatmap = conv.squeeze() @ weights
+    fig = plt.figure(figsize=(6, 6))
+    plt.imshow(img)
+    plt.imshow(zoom(heatmap, zoom=(scaleh, scalew)), cmap='jet', alpha=0.5)
+    plt.savefig('../data/test.png', bbox_inches='tight', pad_inches=0)
+
+    return heatmap[:-20, 25:]
+
 def Home():
     # Layout with columns
     col1, col2, col3, col4 = st.columns([1,14,1.2,1])
@@ -166,7 +189,10 @@ def Home():
         # Process the image for your model (adjust according to your model's needs)
         # Example: resize image, scale pixel values, etc.
         processed_image = process_image(image)
-
+        create_heatmap(processed_image, model)
+        col1, col2, col3 = st.columns([3, 1, 3])
+        with col2:
+            st.image('./data/tmp_heatmap.jpg', caption='Uploaded Image', width=200)
         # Predict using the model
         prediction = model.predict(processed_image)
         box_pred, class_pred = prediction
