@@ -9,7 +9,7 @@ from keras import models, layers, regularizers
 from keras.metrics import Recall, Precision
 import math
 from keras import Model
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from scipy.ndimage import zoom
 
 def set_up(hex_color, max_width=1200, padding_top=1, padding_right=1, padding_left=1, padding_bottom=1, text_color="#FFF", background_color="#0A100D"):
@@ -128,20 +128,20 @@ def create_heatmap(img, model):
     conv_output = model.get_layer("max_pooling2d_2").output
     pred_ouptut = model.get_layer("dense").output
     heatmap_model = Model(model.input, outputs=[conv_output, pred_ouptut])
-
-    conv, pred = heatmap_model.predict(img.reshape([*img.shape, 1]), verbose=0)
+    conv, pred = heatmap_model.predict(img, verbose=0)
     target = np.argmax(pred, axis=1).squeeze()
     w, b = heatmap_model.get_layer("dense").weights
     scaleh = model.input.shape[1] / conv_output.shape[1]
     scalew = model.input.shape[2] / conv_output.shape[2]
     weights = w[:, target].numpy()
     heatmap = conv.squeeze() @ weights
+    print(heatmap*255)
+    print(heatmap.shape)
     fig = plt.figure(figsize=(6, 6))
-    plt.imshow(img)
-    plt.imshow(zoom(heatmap, zoom=(scaleh, scalew)), cmap='jet', alpha=0.5)
-    plt.savefig('../data/test.png', bbox_inches='tight', pad_inches=0)
-
-    return heatmap[:-20, 25:]
+    plt.axis('off')
+    plt.imshow(img.reshape(64,64, 1))
+    plt.imshow(zoom(heatmap*255, zoom=(scaleh, scalew)), cmap='jet', alpha=0.5)
+    plt.savefig('./data/test.png', bbox_inches='tight', pad_inches=0)
 
 def Home():
     # Layout with columns
@@ -190,9 +190,7 @@ def Home():
         # Example: resize image, scale pixel values, etc.
         processed_image = process_image(image)
         create_heatmap(processed_image, model)
-        col1, col2, col3 = st.columns([3, 1, 3])
-        with col2:
-            st.image('./data/tmp_heatmap.jpg', caption='Uploaded Image', width=200)
+
         # Predict using the model
         prediction = model.predict(processed_image)
         box_pred, class_pred = prediction
@@ -200,13 +198,21 @@ def Home():
         value = class_pred[0][0]*100
         if value > 50:
             value = math.trunc(value * 100) / 100.0
-            result = f'AtmospheR detected a plume in the image with a confidence of {value}%'
+            result = f'AtmospheR detected a plume in the image with a confidence of {value}%.' \
+                     f'See below where the methane is located on the image'
+            with col2:
+                st.write(result)
+            col1, col2, col3 = st.columns([3, 1, 3])
+            with col2:
+                st.image('./data/test.png', caption='Uploaded Image', width=200)
         else:
             value = 100 - value
             value = math.trunc(value * 100) / 100.0
             result = f'AtmospheR detected no plumes in the image with a confidence of {value}%'
-        with col2:
-            st.write(result)
+            with col2:
+                st.write(result)
+
+
     empty_space(4)
     st.markdown(f"<div class='centered'><h1 class='text'>Learn about our brand new products</h1></div>", unsafe_allow_html=True)
     st.markdown(f"<div class='centered'>Fast, accurate, AI-powered pollutant detection for industry leaders, policymakers, and the citizens of tomorrow</div>", unsafe_allow_html=True)
