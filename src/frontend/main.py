@@ -1,6 +1,4 @@
 import streamlit as st
-from atmospheR import AtmospheR_page
-import streamlit as st
 import numpy as np
 import tensorflow as tf
 from PIL import Image
@@ -9,6 +7,7 @@ import tensorflow as tf
 from tensorflow import keras
 from keras import models, layers, regularizers
 from keras.metrics import Recall, Precision
+import math
 
 
 def define_model(name, input_shape, seed=31415):
@@ -153,32 +152,39 @@ def Home():
         st.markdown(f"<div class='centered'><h1 class='text'>{fixed_string}</h1></div>", unsafe_allow_html=True)
         model = load_model('./data/87.2.h5')
 
-        # Streamlit app starts here
-        st.title('TIFF Image Classifier and Localization')
-        # Upload TIFF image
+        st.title('Try it yourself')
         uploaded_file = st.file_uploader("Choose a TIFF image...", type="tiff")
-        if uploaded_file is not None:
-            # Open the image using PIL
-            image = Image.open(uploaded_file)
+        # Upload TIFF image
+    if uploaded_file is not None:
+        # Open the image using PIL
+        image = Image.open(uploaded_file)
 
-            # Convert image to 'RGB' if it's not already
-            rgbimage = convert_I_to_L(image).convert('RGB')
+        # Convert image to 'RGB' if it's not already
+        rgbimage = convert_I_to_L(image).convert('RGB')
 
-            # Display the uploaded (and possibly converted) image
-            st.image(rgbimage, caption='Uploaded Image', use_column_width=True)
+        # Display the uploaded (and possibly converted) image
+        col1, col2, col3 = st.columns([3, 1, 3])
+        with col2:
+            st.image(rgbimage, caption='Uploaded Image', width=200)
 
-            # Process the image for your model (adjust according to your model's needs)
-            # Example: resize image, scale pixel values, etc.
+        # Process the image for your model (adjust according to your model's needs)
+        # Example: resize image, scale pixel values, etc.
+        processed_image = process_image(image)
 
-
-            processed_image = process_image(image)
-
-            # Predict using the model
-            prediction = model.predict(processed_image)
-            print(prediction)
-            box_pred, class_pred = prediction
-
-            st.write(f'Classification Result: {class_pred}')
+        # Predict using the model
+        prediction = model.predict(processed_image)
+        box_pred, class_pred = prediction
+        col1, col2, col3 = st.columns([1, 2, 1])
+        value = class_pred[0][0]*100
+        if value > 50:
+            value = math.trunc(value * 100) / 100.0
+            result = f'AtmospheR detected a plume in the image with a confidence of {value}%'
+        else:
+            value = 100 - value
+            value = math.trunc(value * 100) / 100.0
+            result = f'AtmospheR detected no plumes in the image with a confidence of {value}%'
+        with col2:
+            st.write(result)
     empty_space(4)
     st.markdown(f"<div class='centered'><h1 class='text'>Learn about our brand new products</h1></div>", unsafe_allow_html=True)
     st.markdown(f"<div class='centered'>Fast, accurate, AI-powered pollutant detection for industry leaders, policymakers, and the citizens of tomorrow</div>", unsafe_allow_html=True)
@@ -199,11 +205,6 @@ def Home():
         </div>
     """
     st.markdown(footer, unsafe_allow_html=True)
-
-def AtmospheR():
-    AtmospheR_page()
-
-
 
 
 def empty_space(i):
