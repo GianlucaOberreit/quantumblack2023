@@ -111,6 +111,28 @@ def set_up(hex_color, max_width=1200, padding_top=1, padding_right=1, padding_le
         unsafe_allow_html=True
     )
 
+def create_heatmap(img, model):
+    conv_output = model.get_layer("dense_124").output
+    pred_ouptut = model.get_layer("class_output").output
+    heatmap_model = Model(model.input, outputs=[conv_output, pred_ouptut])
+
+    conv, pred = heatmap_model.predict(img.reshape([1, *img.shape]), verbose = 0)
+    scaleh = model.input.shape[1]/conv_output.shape[1]
+    scalew = model.input.shape[2]/conv_output.shape[2]
+    target = np.argmax(pred, axis=1).squeeze()
+    w, b = heatmap_model.get_layer("class_output").weights
+    weights = w[:, target].numpy()
+    heatmap = conv.squeeze() @ weights
+
+    fig = plt.figure(figsize=(6, 6))
+    plt.imshow(img)
+    plt.imshow(zoom(heatmap, zoom=(scaleh, scalew)), cmap='jet', alpha=0.5)
+    plt.savefig('../data/test.png', bbox_inches='tight', pad_inches = 0)
+    heatmap = cv2.imread("test.png")
+    return heatmap[:-20,25:]
+
+
+
 
 def convert_I_to_L(img):
     array = np.uint8(np.array(img) / 256)
@@ -170,6 +192,13 @@ def Home():
         # Process the image for your model (adjust according to your model's needs)
         # Example: resize image, scale pixel values, etc.
         processed_image = process_image(image)
+
+        # Create heatmap
+        heatmap = create_heatmap(processed_image, model) 
+        col1, col2, col3 = st.columns([3, 1, 3])
+        with col2:
+            st.image(heatmap, caption='Uploaded Image', width=200)
+
 
         # Predict using the model
         prediction = model.predict(processed_image)
