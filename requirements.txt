@@ -1,2 +1,6 @@
 rasterio
 tensorflow
+numpy
+pandas
+matplotlib
+sklearn

@@ -1,15 +1,9 @@
 # -*- coding: utf-8 -*-
-from tensorflow.keras.layers import GaussianNoise
 from tensorflow.keras import regularizers
-import tensorflow.keras.backend as K
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import models, layers, regularizers
-from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, EarlyStopping
-from tensorflow.keras.optimizers import Adam, SGD
 from tensorflow.keras.metrics import Recall, Precision
-from keras.layers import concatenate
-from keras import Input
 
 import numpy as np
 import random as rn
@@ -20,9 +14,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.metrics import Recall, Precision
 import time
-from collections import namedtuple
 import rasterio
-import cv2
 
 DATA_PATH = "./data/"
 
